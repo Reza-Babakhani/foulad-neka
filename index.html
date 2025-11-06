@@ -145,6 +145,12 @@
 				background-color: #2c3e50; /* Darker background for better contrast (fixed dark for visibility) */
 				color: #ecf0f1;
 			}
+
+			.module-icon {
+				width: 50px;
+				margin-left: 10px;
+				filter: invert(100%);
+			}
 		</style>
 	</head>
 	<body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-500">
@@ -399,6 +405,7 @@
 						y: 0.2,
 						z: GRID_CELL_SIZE,
 					},
+					icon: "assets/images/modules/floor.png",
 					snap: GRID_CELL_SIZE / 4, // Allow half-unit movement (2 units)
 					isRotatable: false,
 				},
@@ -409,6 +416,7 @@
 					cost: 1200,
 					dimensions: { x: GRID_CELL_SIZE, y: WALL_HEIGHT, z: 0.2 },
 					isRotatable: true,
+					icon: "assets/images/modules/wall.png",
 					snap: GRID_CELL_SIZE / 4,
 				},
 				{
@@ -421,6 +429,7 @@
 						y: WALL_HEIGHT,
 						z: 0.2,
 					},
+					icon: "assets/images/modules/wall.png",
 					isRotatable: true,
 					snap: GRID_CELL_SIZE / 4,
 				},
@@ -434,6 +443,7 @@
 						y: WALL_HEIGHT / 2,
 						z: 0.2,
 					},
+					icon: "assets/images/modules/wall.png",
 					isRotatable: true,
 					snap: GRID_CELL_SIZE / 4, // Allow half-unit movement
 				},
@@ -447,6 +457,7 @@
 						y: WALL_HEIGHT / 2,
 						z: 0.2,
 					},
+					icon: "assets/images/modules/wall.png",
 					isRotatable: true,
 					snap: GRID_CELL_SIZE / 4, // Allow half-unit movement
 				},
@@ -456,7 +467,7 @@
 					color: 0xa0a0a0,
 					cost: 1300,
 					dimensions: { x: GRID_CELL_SIZE, y: WALL_HEIGHT, z: 0.2 },
-					icon: "🚪",
+					icon: "assets/images/modules/door.png",
 					isRotatable: true,
 					snap: GRID_CELL_SIZE / 4,
 				},
@@ -466,7 +477,7 @@
 					color: 0xa0a0a0,
 					cost: 1500,
 					dimensions: { x: GRID_CELL_SIZE, y: WALL_HEIGHT, z: 0.2 },
-					icon: "🪟",
+					icon: "assets/images/modules/window.png",
 					isRotatable: true,
 					snap: GRID_CELL_SIZE / 4,
 				},
@@ -480,7 +491,7 @@
 						y: WALL_HEIGHT,
 						z: GRID_CELL_SIZE / 2,
 					},
-					icon: "🪜",
+					icon: "assets/images/modules/stairs.png",
 					isRotatable: true,
 					snap: GRID_CELL_SIZE / 4,
 				},
@@ -495,7 +506,7 @@
 						z: GRID_CELL_SIZE,
 					},
 					snap: GRID_CELL_SIZE / 4, // Allow half-unit movement (2 units)
-					icon: "🏠",
+					icon: "assets/images/modules/roof.png",
 					isRotatable: false,
 				},
 				{
@@ -508,7 +519,7 @@
 						y: WALL_HEIGHT,
 						z: GRID_CELL_SIZE / 2,
 					},
-					icon: "🛗",
+					icon: "assets/images/modules/elevator.png",
 					isRotatable: true,
 					snap: GRID_CELL_SIZE / 4,
 					customMesh: true, // flag for custom mesh
@@ -1947,7 +1958,9 @@
 						"module-item p-3 rounded-lg flex items-center bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 shadow-md";
 					item.setAttribute("data-id", module.id);
 					item.innerHTML = `
-                    <span class="text-3xl mr-3">${module.icon || "🏗️"}</span>
+                    <span class="text-3xl mr-3"> <img class='module-icon' src="${
+						module.icon
+					}" /> </span>
                     <div class="flex-grow">
                         <p class="font-semibold text-gray-900 dark:text-white">${
 							module.name
