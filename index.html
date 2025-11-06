@@ -367,6 +367,7 @@
 						y: 0.2,
 						z: GRID_CELL_SIZE,
 					},
+					snap: GRID_CELL_SIZE / 2, // Allow half-unit movement (2 units)
 					isRotatable: false,
 				},
 				{
@@ -418,6 +419,7 @@
 						y: 0.3,
 						z: GRID_CELL_SIZE,
 					},
+					snap: GRID_CELL_SIZE / 2, // Allow half-unit movement (2 units)
 					icon: "🏠",
 					isRotatable: false,
 				},
@@ -1440,13 +1442,21 @@
 					if (intersects.length > 0) {
 						const intersectPoint = intersects[0].point;
 
-						const isWallModule = [
-							"wall",
-							"wall_door",
-							"wall_window",
-							"staircase",
-						].includes(ghostMesh.userData.id);
-						const snapFunction = isWallModule
+						// Get the module config for the ghost object
+						const moduleConfig = MODULES.find(
+							(m) => m.id === ghostMesh.userData.id
+						);
+						// Use the module's snap value if defined, otherwise use default logic
+						const snapFunction = moduleConfig?.snap
+							? (coord) =>
+									Math.round(coord / moduleConfig.snap) *
+									moduleConfig.snap
+							: [
+									"wall",
+									"wall_door",
+									"wall_window",
+									"staircase",
+							  ].includes(ghostMesh.userData.id)
 							? snapToHalfCell
 							: snapToFullCell;
 
@@ -1494,13 +1504,21 @@
 						const intersectPoint = intersects[0].point;
 						canvas.classList.add("draggable");
 
-						const isWallModule = [
-							"wall",
-							"wall_door",
-							"wall_window",
-							"staircase",
-						].includes(mouseDownObject.userData.id);
-						const snapFunction = isWallModule
+						// Get the module config for the object being moved
+						const moduleConfig = MODULES.find(
+							(m) => m.id === mouseDownObject.userData.id
+						);
+						// Use the module's snap value if defined, otherwise use default logic
+						const snapFunction = moduleConfig?.snap
+							? (coord) =>
+									Math.round(coord / moduleConfig.snap) *
+									moduleConfig.snap
+							: [
+									"wall",
+									"wall_door",
+									"wall_window",
+									"staircase",
+							  ].includes(mouseDownObject.userData.id)
 							? snapToHalfCell
 							: snapToFullCell;
 
