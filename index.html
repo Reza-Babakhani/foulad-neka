@@ -6,6 +6,10 @@
 		<title>برنامه‌ریز ماژولار ساختمان</title>
 		<!-- Load and Configure Tailwind CSS (Corrected CDN) -->
 		<script src="https://cdn.tailwindcss.com"></script>
+		<link
+			href="fonts/vazirmatn-v33.003/Vazirmatn-Variable-font-face.css"
+			rel="stylesheet"
+		/>
 		<script>
 			// --- Tailwind Configuration with Dark Mode Support ---
 			// The inline configuration script is placed immediately after the CDN load
@@ -15,7 +19,12 @@
 				theme: {
 					extend: {
 						fontFamily: {
-							sans: ["Inter", "Tahoma", "sans-serif"],
+							sans: [
+								"Vazirmatn",
+								"Inter",
+								"Tahoma",
+								"sans-serif",
+							],
 						},
 					},
 				},
@@ -34,7 +43,7 @@
 				height: 100%;
 				margin: 0;
 				overflow: hidden;
-				font-family: "Inter", Tahoma, sans-serif;
+				font-family: "Vazirmatn", "Inter", Tahoma, sans-serif;
 				transition: background-color 0.3s ease; /* Smooth transition for body background */
 			}
 			#app {
