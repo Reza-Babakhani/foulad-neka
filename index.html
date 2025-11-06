@@ -283,6 +283,30 @@
 					</div>
 				</div>
 
+				<!-- Save/Open Project Controls -->
+				<div
+					class="mt-6 pt-4 border-t border-gray-300 dark:border-gray-700"
+				>
+					<button
+						id="saveProjectBtn"
+						class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md mb-2"
+					>
+						ذخیره پروژه
+					</button>
+					<input
+						type="file"
+						id="openProjectInput"
+						accept="application/json"
+						style="display: none"
+					/>
+					<button
+						id="openProjectBtn"
+						class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md"
+					>
+						باز کردن پروژه
+					</button>
+				</div>
+
 				<div
 					class="mt-6 pt-4 border-t border-gray-300 dark:border-gray-700"
 				>
@@ -367,7 +391,7 @@
 						y: 0.2,
 						z: GRID_CELL_SIZE,
 					},
-					snap: GRID_CELL_SIZE / 2, // Allow half-unit movement (2 units)
+					snap: GRID_CELL_SIZE / 4, // Allow half-unit movement (2 units)
 					isRotatable: false,
 				},
 				{
@@ -377,6 +401,7 @@
 					cost: 1200,
 					dimensions: { x: GRID_CELL_SIZE, y: WALL_HEIGHT, z: 0.2 },
 					isRotatable: true,
+					snap: GRID_CELL_SIZE / 4,
 				},
 				{
 					id: "wall_2",
@@ -412,6 +437,7 @@
 					dimensions: { x: GRID_CELL_SIZE, y: WALL_HEIGHT, z: 0.2 },
 					icon: "🚪",
 					isRotatable: true,
+					snap: GRID_CELL_SIZE / 4,
 				},
 				{
 					id: "wall_window",
@@ -421,6 +447,7 @@
 					dimensions: { x: GRID_CELL_SIZE, y: WALL_HEIGHT, z: 0.2 },
 					icon: "🪟",
 					isRotatable: true,
+					snap: GRID_CELL_SIZE / 4,
 				},
 				{
 					id: "staircase",
@@ -446,9 +473,24 @@
 						y: 0.3,
 						z: GRID_CELL_SIZE,
 					},
-					snap: GRID_CELL_SIZE / 2, // Allow half-unit movement (2 units)
+					snap: GRID_CELL_SIZE / 4, // Allow half-unit movement (2 units)
 					icon: "🏠",
 					isRotatable: false,
+				},
+				{
+					id: "elevator",
+					name: "آسانسور (۲×۲ متر)",
+					color: 0x222299,
+					cost: 5000,
+					dimensions: {
+						x: GRID_CELL_SIZE / 2,
+						y: WALL_HEIGHT,
+						z: GRID_CELL_SIZE / 2,
+					},
+					icon: "🛗",
+					isRotatable: true,
+					snap: GRID_CELL_SIZE / 4,
+					customMesh: true, // flag for custom mesh
 				},
 			];
 
@@ -1036,6 +1078,50 @@
 				return group;
 			}
 
+			// --- Custom Elevator Mesh ---
+			function createElevatorMesh(moduleConfig, position) {
+				const group = new THREE.Group();
+				const { x, y, z } = moduleConfig.dimensions;
+				const levelOffset = position.y || 0;
+
+				// Main box (elevator shaft)
+				const boxMaterial = new THREE.MeshPhongMaterial({
+					color: moduleConfig.color,
+					specular: 0x444444,
+					shininess: 30,
+					transparent: true,
+					opacity: LEVEL_OPACITY,
+				});
+				const boxGeom = new THREE.BoxGeometry(x, y, z);
+				const boxMesh = new THREE.Mesh(boxGeom, boxMaterial);
+				boxMesh.position.set(0, 0, 0);
+				group.add(boxMesh);
+
+				// Door side (one face, thinner, different color)
+				const doorMaterial = new THREE.MeshPhongMaterial({
+					color: 0xcccccc,
+					shininess: 60,
+					transparent: true,
+					opacity: 1.0,
+				});
+				const doorGeom = new THREE.BoxGeometry(x * 0.9, y * 0.8, 0.05);
+				const doorMesh = new THREE.Mesh(doorGeom, doorMaterial);
+				// Place door on +Z face
+				doorMesh.position.set(0, 0, z / 2 + 0.025);
+				group.add(doorMesh);
+
+				group.position.set(position.x, y / 2 + levelOffset, position.z);
+				group.userData = {
+					...moduleConfig,
+					isPlacedModule: true,
+					isRotatable: true,
+					level: currentLevel,
+				};
+				group.castShadow = true;
+				group.receiveShadow = true;
+				return group;
+			}
+
 			// --- Ghost Mesh Logic ---
 
 			/**
@@ -1074,6 +1160,12 @@
 					);
 				} else if (moduleConfig.id === "staircase") {
 					tempMesh = createStairsMesh(
+						moduleConfig,
+						tempPosition,
+						ghostMaterial
+					);
+				} else if (moduleConfig.id === "elevator") {
+					tempMesh = createElevatorMesh(
 						moduleConfig,
 						tempPosition,
 						ghostMaterial
@@ -1173,6 +1265,13 @@
 				}
 				if (moduleConfig.id === "staircase") {
 					return createStairsMesh(moduleConfig, {
+						x: position.x,
+						y: levelOffset,
+						z: position.z,
+					});
+				}
+				if (moduleConfig.id === "elevator") {
+					return createElevatorMesh(moduleConfig, {
 						x: position.x,
 						y: levelOffset,
 						z: position.z,
@@ -1897,6 +1996,80 @@
 				document.getElementById("aiResultArea").classList.add("hidden");
 				hideTooltip();
 			}
+
+			// --- Save/Load Project Logic ---
+			document.getElementById("saveProjectBtn").onclick = function () {
+				const data = placedObjects.map((obj) => ({
+					id: obj.userData.id,
+					position: {
+						x: obj.position.x,
+						y: obj.position.y,
+						z: obj.position.z,
+					},
+					rotationY: obj.rotation ? obj.rotation.y : 0,
+					level: obj.userData.level || 0,
+				}));
+				const blob = new Blob([JSON.stringify(data, null, 2)], {
+					type: "application/json",
+				});
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement("a");
+				a.href = url;
+				a.download = "building-project.json";
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+			};
+			document.getElementById("openProjectBtn").onclick = function () {
+				document.getElementById("openProjectInput").click();
+			};
+			document.getElementById("openProjectInput").onchange = function (
+				e
+			) {
+				const file = e.target.files[0];
+				if (!file) return;
+				const reader = new FileReader();
+				reader.onload = function (evt) {
+					try {
+						const data = JSON.parse(evt.target.result);
+						// Remove all current objects
+						placedObjects.forEach((obj) => scene.remove(obj));
+						placedObjects = [];
+						totalCost = 0;
+						// Add loaded objects
+						data.forEach((item) => {
+							const moduleConfig = MODULES.find(
+								(m) => m.id === item.id
+							);
+							if (moduleConfig) {
+								let mesh = createModuleMesh(moduleConfig, {
+									x: item.position.x,
+									y: 0,
+									z: item.position.z,
+								});
+								mesh.position.set(
+									item.position.x,
+									item.position.y,
+									item.position.z
+								);
+								if (mesh.rotation)
+									mesh.rotation.y = item.rotationY || 0;
+								mesh.userData.level = item.level || 0;
+								scene.add(mesh);
+								placedObjects.push(mesh);
+								totalCost += moduleConfig.cost;
+							}
+						});
+						updateCostDisplay();
+						updateGridPlane();
+						showMessage("پروژه با موفقیت بارگذاری شد.");
+					} catch (err) {
+						showMessage("خطا در بارگذاری پروژه!", true);
+					}
+				};
+				reader.readAsText(file);
+			};
 		</script>
 	</body>
 </html>
